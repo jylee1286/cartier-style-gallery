@@ -53,12 +53,12 @@ const composer = new EffectComposer(renderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-// Bloom for soft glow (adjusted for brighter scene)
+// Bloom for soft glow (CARTIER DRAMATIC GLOW)
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.5,    // strength (increased)
-  0.8,    // radius (increased)
-  0.75    // threshold (lowered so more glows)
+  0.85,   // strength (INCREASED for dramatic effect)
+  1.0,    // radius (larger spread)
+  0.65    // threshold (lower = more things glow)
 );
 composer.addPass(bloomPass);
 
@@ -168,19 +168,19 @@ const materials = {
   }),
   gold: new THREE.MeshStandardMaterial({ 
     color: 0xe0b840,
-    roughness: 0.25,
-    metalness: 0.85,
-    envMapIntensity: 1.2,
+    roughness: 0.18,
+    metalness: 0.92,
+    envMapIntensity: 1.8,
     emissive: 0xe0b840,
-    emissiveIntensity: 0.1
+    emissiveIntensity: 0.35
   }),
   accent: new THREE.MeshStandardMaterial({ 
     color: 0xf2e4c8,
-    roughness: 0.35,
-    metalness: 0.65,
-    envMapIntensity: 0.8,
+    roughness: 0.25,
+    metalness: 0.75,
+    envMapIntensity: 1.2,
     emissive: 0xf2e4c8,
-    emissiveIntensity: 0.08
+    emissiveIntensity: 0.25
   })
 };
 
@@ -414,13 +414,16 @@ for (let i = 0; i < 4; i++) {
 
 const exhibits = [];
 
-// Golden torus (ring)
+// Golden torus (ring) + spotlight
 const torusGeo = new THREE.TorusGeometry(1.5, 0.4, 32, 64);
 const torus = new THREE.Mesh(torusGeo, materials.gold);
 torus.position.set(0, 5, 0);
 torus.castShadow = true;
 exhibits.push(torus);
 scene.add(torus);
+const torusLight = new THREE.PointLight(0xffe8a0, 0.8, 8);
+torusLight.position.copy(torus.position);
+scene.add(torusLight);
 
 // Geometric sculpture 1
 const dodecaGeo = new THREE.DodecahedronGeometry(1.2, 0);
@@ -429,6 +432,9 @@ dodeca.position.set(3, 4.5, -45);
 dodeca.castShadow = true;
 exhibits.push(dodeca);
 scene.add(dodeca);
+const dodecaLight = new THREE.PointLight(0xfff0d8, 0.6, 7);
+dodecaLight.position.copy(dodeca.position);
+scene.add(dodecaLight);
 
 // Geometric sculpture 2
 const icosaGeo = new THREE.IcosahedronGeometry(1, 0);
@@ -437,6 +443,9 @@ icosa.position.set(-3, 5.5, -95);
 icosa.castShadow = true;
 exhibits.push(icosa);
 scene.add(icosa);
+const icosaLight = new THREE.PointLight(0xffe8a0, 0.8, 8);
+icosaLight.position.copy(icosa.position);
+scene.add(icosaLight);
 
 // Floating sphere
 const sphereGeo = new THREE.SphereGeometry(1.5, 64, 64);
@@ -445,6 +454,9 @@ sphere.position.set(0, 6, -145);
 sphere.castShadow = true;
 exhibits.push(sphere);
 scene.add(sphere);
+const sphereLight = new THREE.PointLight(0xfff0d8, 0.6, 8);
+sphereLight.position.copy(sphere.position);
+scene.add(sphereLight);
 
 // Octahedron
 const octaGeo = new THREE.OctahedronGeometry(1.3, 0);
@@ -453,6 +465,9 @@ octa.position.set(2, 5, -195);
 octa.castShadow = true;
 exhibits.push(octa);
 scene.add(octa);
+const octaLight = new THREE.PointLight(0xffe8a0, 0.8, 8);
+octaLight.position.copy(octa.position);
+scene.add(octaLight);
 
 // ============================================
 // Decorative Pillars
