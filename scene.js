@@ -7,6 +7,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,9 +16,9 @@ gsap.registerPlugin(ScrollTrigger);
 // ============================================
 const scene = new THREE.Scene();
 
-// Warm beige background (Cartier palette - LIGHTENED)
-scene.background = new THREE.Color(0xd4b998);
-scene.fog = new THREE.FogExp2(0xd4b998, 0.008);
+// Warm beige background (Cartier palette - VERY LIGHT)
+scene.background = new THREE.Color(0xe0cdb8);
+scene.fog = new THREE.FogExp2(0xe0cdb8, 0.006);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(
@@ -36,10 +37,10 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false; // Disable shadows for Cartier look
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.3; // Brighter!
+renderer.toneMappingExposure = 1.5; // Much brighter!
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
@@ -142,28 +143,28 @@ scene.add(accentLight);
 // ============================================
 const materials = {
   floor: new THREE.MeshStandardMaterial({ 
-    color: 0xc4b29a,
-    roughness: 0.88,
-    metalness: 0.02,
-    envMapIntensity: 0.3
-  }),
-  wall: new THREE.MeshStandardMaterial({ 
-    color: 0xddd0be,
-    roughness: 0.92,
-    metalness: 0.01,
+    color: 0xd2c0aa,
+    roughness: 0.9,
+    metalness: 0,
     envMapIntensity: 0.2
   }),
-  ceiling: new THREE.MeshStandardMaterial({ 
-    color: 0xf0e6d6,
+  wall: new THREE.MeshStandardMaterial({ 
+    color: 0xe8dcc8,
     roughness: 0.95,
-    metalness: 0.0,
+    metalness: 0,
     envMapIntensity: 0.1
   }),
+  ceiling: new THREE.MeshStandardMaterial({ 
+    color: 0xf5eee0,
+    roughness: 0.98,
+    metalness: 0,
+    envMapIntensity: 0.05
+  }),
   pillar: new THREE.MeshStandardMaterial({ 
-    color: 0xd8cbb8,
-    roughness: 0.75,
-    metalness: 0.05,
-    envMapIntensity: 0.4
+    color: 0xe5d8c8,
+    roughness: 0.85,
+    metalness: 0,
+    envMapIntensity: 0.2
   }),
   gold: new THREE.MeshStandardMaterial({ 
     color: 0xe0b840,
@@ -190,13 +191,25 @@ const materials = {
 function createRoom(zStart, roomLength = 40, roomWidth = 20, roomHeight = 12) {
   const group = new THREE.Group();
   
-  // Floor
-  const floorGeo = new THREE.PlaneGeometry(roomWidth, roomLength, 20, 20);
-  const floor = new THREE.Mesh(floorGeo, materials.floor);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, 0, zStart - roomLength/2);
-  floor.receiveShadow = true;
-  group.add(floor);
+  // Floor with subtle reflection (Cartier luxury touch)
+  const floorGeo = new THREE.PlaneGeometry(roomWidth, roomLength);
+  const reflectiveFloor = new Reflector(floorGeo, {
+    clipBias: 0.003,
+    textureWidth: window.innerWidth * window.devicePixelRatio * 0.5,
+    textureHeight: window.innerHeight * window.devicePixelRatio * 0.5,
+    color: 0xc4b29a,
+    opacity: 0.25, // Subtle reflection
+  });
+  reflectiveFloor.rotation.x = -Math.PI / 2;
+  reflectiveFloor.position.set(0, 0.01, zStart - roomLength/2);
+  group.add(reflectiveFloor);
+  
+  // Base matte floor underneath
+  const baseFloor = new THREE.Mesh(floorGeo, materials.floor);
+  baseFloor.rotation.x = -Math.PI / 2;
+  baseFloor.position.set(0, 0, zStart - roomLength/2);
+  baseFloor.receiveShadow = true;
+  group.add(baseFloor);
   
   // Ceiling (slightly curved for organic feel)
   const ceilingGeo = new THREE.PlaneGeometry(roomWidth, roomLength, 20, 20);
@@ -494,8 +507,8 @@ for (let i = 0; i < particleCount; i++) {
   positions[i * 3 + 1] = Math.random() * 14;
   positions[i * 3 + 2] = Math.random() * -250 + 30;
   
-  // Varied particle sizes (larger and more visible)
-  sizes[i] = Math.random() * 0.15 + 0.12;
+  // Varied particle sizes (MUCH LARGER for Cartier visibility)
+  sizes[i] = Math.random() * 0.35 + 0.25;
   
   velocities.push({
     x: (Math.random() - 0.5) * 0.008,
@@ -560,6 +573,72 @@ function createParticleTexture() {
   
   const texture = new THREE.CanvasTexture(canvas);
   return texture;
+}
+
+// ============================================
+// Volumetric Light Shafts (God Rays)
+// ============================================
+
+function createLightShaft(x, y, z, angle = 0) {
+  const geometry = new THREE.ConeGeometry(2, 15, 32, 1, true);
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      lightColor: { value: new THREE.Color(0xfff8e8) },
+      opacity: { value: 0.08 }
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 lightColor;
+      uniform float opacity;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      
+      void main() {
+        float intensity = pow(1.0 - abs(vPosition.y / 7.5), 2.0);
+        vec3 color = lightColor;
+        gl_FragColor = vec4(color, opacity * intensity);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  
+  const shaft = new THREE.Mesh(geometry, material);
+  shaft.position.set(x, y, z);
+  shaft.rotation.z = angle;
+  return shaft;
+}
+
+// Add light shafts throughout the gallery
+const lightShafts = [];
+for (let i = 0; i < 6; i++) {
+  const z = 10 - i * 45;
+  
+  // Main ceiling light
+  const shaft1 = createLightShaft(0, 14, z, Math.PI);
+  lightShafts.push(shaft1);
+  scene.add(shaft1);
+  
+  // Side lights (alternating)
+  if (i % 2 === 0) {
+    const shaft2 = createLightShaft(-8, 12, z - 15, Math.PI + 0.3);
+    lightShafts.push(shaft2);
+    scene.add(shaft2);
+  } else {
+    const shaft3 = createLightShaft(8, 12, z - 15, Math.PI - 0.3);
+    lightShafts.push(shaft3);
+    scene.add(shaft3);
+  }
 }
 
 // ============================================
@@ -641,6 +720,12 @@ function animate() {
     exhibit.rotation.y += 0.003;
     exhibit.rotation.x = Math.sin(time + i) * 0.1;
     exhibit.position.y += Math.sin(time * 0.5 + i * 2) * 0.002;
+  });
+  
+  // Animate light shafts (subtle pulsing)
+  lightShafts.forEach((shaft, i) => {
+    const pulse = Math.sin(time * 0.3 + i * 0.5) * 0.02 + 0.08;
+    shaft.material.uniforms.opacity.value = pulse;
   });
   
   // Animate particles
