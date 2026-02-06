@@ -15,9 +15,9 @@ gsap.registerPlugin(ScrollTrigger);
 // ============================================
 const scene = new THREE.Scene();
 
-// Warm beige background (Cartier palette)
-scene.background = new THREE.Color(0xc9a88a);
-scene.fog = new THREE.FogExp2(0xc9a88a, 0.01);
+// Warm beige background (Cartier palette - LIGHTENED)
+scene.background = new THREE.Color(0xd4b998);
+scene.fog = new THREE.FogExp2(0xd4b998, 0.008);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(
@@ -39,7 +39,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.3; // Brighter!
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
@@ -52,12 +52,12 @@ const composer = new EffectComposer(renderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-// Bloom for soft glow
+// Bloom for soft glow (adjusted for brighter scene)
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.4,    // strength
-  0.6,    // radius  
-  0.85    // threshold
+  0.5,    // strength (increased)
+  0.8,    // radius (increased)
+  0.75    // threshold (lowered so more glows)
 );
 composer.addPass(bloomPass);
 
@@ -99,8 +99,8 @@ composer.addPass(vignettePass);
 // Lighting — Soft, warm, luxurious (CARTIER-STYLE)
 // ============================================
 
-// Ambient fill (increased for softer shadows)
-const ambientLight = new THREE.AmbientLight(0xf5e8d8, 0.7);
+// Ambient fill (significantly increased for Cartier glow)
+const ambientLight = new THREE.AmbientLight(0xfff8f0, 0.95);
 scene.add(ambientLight);
 
 // Main directional (soft skylight)
@@ -129,7 +129,7 @@ fillLight2.position.set(12, 6, 10);
 scene.add(fillLight2);
 
 // Hemisphere light for natural sky/ground blend
-const hemiLight = new THREE.HemisphereLight(0xfff5e8, 0xc9a88a, 0.5);
+const hemiLight = new THREE.HemisphereLight(0xfffbf0, 0xd4b998, 0.65);
 scene.add(hemiLight);
 
 // Subtle point light for depth
@@ -142,19 +142,19 @@ scene.add(accentLight);
 // ============================================
 const materials = {
   floor: new THREE.MeshStandardMaterial({ 
-    color: 0xb5a08d,
+    color: 0xc4b29a,
     roughness: 0.88,
     metalness: 0.02,
     envMapIntensity: 0.3
   }),
   wall: new THREE.MeshStandardMaterial({ 
-    color: 0xcfc2b0,
+    color: 0xddd0be,
     roughness: 0.92,
     metalness: 0.01,
     envMapIntensity: 0.2
   }),
   ceiling: new THREE.MeshStandardMaterial({ 
-    color: 0xe2d8c8,
+    color: 0xf0e6d6,
     roughness: 0.95,
     metalness: 0.0,
     envMapIntensity: 0.1
